@@ -1,0 +1,8 @@
+*.bat
+.project
+.metadata
+.classpath
+.settings/
+.externalToolBuilders/
+bin/**
+build/**

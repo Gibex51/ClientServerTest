@@ -1,0 +1,76 @@
+<?xml version="1.0"?>
+<project name="ServerProject">
+	<property name="build.dir" value="build"/>
+	
+	<property name="server.src.dir" value="src/server"/>	
+	<property name="server.jar" value="${build.dir}/server.jar"/>	
+	<property name="server.class" value="server.ServerMain"/>
+	
+	<property name="client.src.dir" value="src/client"/>
+	<property name="client.jar" value="${build.dir}/client.jar"/>	
+	<property name="client.class" value="client.ClientMain"/>
+	
+	<property name="utils.src.dir" value="src/utils"/>
+	
+	<target name="utils-compile">
+        <mkdir dir="${build.dir}/server/classes"/>
+		<mkdir dir="${build.dir}/client/classes"/>
+        <javac srcdir="${utils.src.dir}" 
+        	destdir="${build.dir}/server/classes" 
+        	includeantruntime="true"/>
+		<javac srcdir="${utils.src.dir}" 
+        	destdir="${build.dir}/client/classes" 
+        	includeantruntime="true"/>
+    </target>
+	
+	<target name="server-compile" depends="utils-compile">
+        <javac srcdir="${server.src.dir}" 
+        	destdir="${build.dir}/server/classes" 
+        	includeantruntime="true"/>
+    </target>
+	
+	<target name="server-build-jar" depends="server-compile">
+        <jar destfile="${server.jar}"
+             basedir="${build.dir}/server/classes"
+             compress="false"
+             index="true">
+        	<manifest>
+			    <attribute name="Main-Class" value="${server.class}"/>
+			</manifest>
+        </jar>
+    </target>
+	
+	<target name="server-run-jar" depends="server-build-jar">
+		<java classname="${server.class}" fork="true" classpath="bin:${server.jar}"/>
+	</target>
+
+	<target name="client-compile" depends="utils-compile">
+        <javac srcdir="${client.src.dir}" 
+        	destdir="${build.dir}/client/classes" 
+        	includeantruntime="true"/>
+    </target>
+	
+	<target name="client-build-jar" depends="client-compile">	
+        <jar destfile="${client.jar}"
+             basedir="${build.dir}/client/classes"
+             compress="false"
+             index="true">
+        	<manifest>
+			    <attribute name="Main-Class" value="${client.class}"/>
+			</manifest>
+        </jar>
+    </target>
+	
+	<target name="client-run-jar" depends="client-build-jar">
+		<java classname="${client.class}" fork="true" classpath="bin:${client.jar}"/>
+	</target>
+	
+	<target name="build-all-jar" depends="client-build-jar, server-build-jar">
+        <echo>All builded</echo>
+    </target>
+	
+	<target name="clean">
+		<echo>Cleaning</echo>
+		<delete dir="${build.dir}"/>
+	</target>
+</project>
