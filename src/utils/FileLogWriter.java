@@ -10,14 +10,18 @@ public class FileLogWriter implements LogWriter {
 		this.outputFile = outputFile;
 	}
 	
-	public void Write(String message) {
+	public void write(String message) {
+		PrintWriter printWriter = null;
 		try {
-			PrintWriter printWriter = new PrintWriter(new FileOutputStream(outputFile, true));
-			printWriter.write(message + "\n");
-			printWriter.flush();
-			printWriter.close();
+			printWriter = new PrintWriter(new FileOutputStream(outputFile, true));
+			printWriter.write(message + "\n");		
 		} catch (Exception e) {
 			System.out.println(e.getMessage());
+		} finally {
+			if (printWriter != null) {
+				printWriter.flush();
+				printWriter.close();
+			}
 		}
 	}
 }

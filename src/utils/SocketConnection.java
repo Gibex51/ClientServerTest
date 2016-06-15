@@ -20,7 +20,7 @@ public class SocketConnection {
 	DataOutputStream outStream = null;
 	DataInputStream inStream = null;
 	
-	private void InitializeIOStreams() throws IOException {
+	private void initializeIOStreams() throws IOException {
 		outStream = new DataOutputStream(socket.getOutputStream());
 		inStream = new DataInputStream(socket.getInputStream());
 	}
@@ -28,34 +28,34 @@ public class SocketConnection {
 	public SocketConnection(String host, int port) {
 		try {
 			socket = new Socket(host, port);
-			InitializeIOStreams();
+			initializeIOStreams();
 		} catch (Exception e) {
-			Logger.Write(String.format(STR_SOCKET_ERROR_EX, port, host) + e.getMessage());
+			Logger.write(String.format(STR_SOCKET_ERROR_EX, port, host) + e.getMessage());
 		}
 	}
 	
 	public SocketConnection(Socket socket) {
 		try {
 			this.socket = socket;
-			InitializeIOStreams();
+			initializeIOStreams();
 		} catch (Exception e) {
-			Logger.Write(STR_SOCKET_ERROR + e.getMessage());
+			Logger.write(STR_SOCKET_ERROR + e.getMessage());
 		}
 	}
 	
-	public void WriteLine(String message) throws IOException {
+	public void writeLine(String message) throws IOException {
 		outStream.writeByte(DATA_IS_STRING);	
 		outStream.writeUTF(message);
 	}
 	
-	public String ReadLine() throws IOException {
+	public String readLine() throws IOException {
 		byte flag = inStream.readByte();
 		if (flag != DATA_IS_STRING)
 			return "";
 		return inStream.readUTF();
 	}
 	
-	public void WriteFile(File file) throws IOException {		
+	public void writeFile(File file) throws IOException {		
 		outStream.writeByte(DATA_IS_FILE);
 		
 		long fileSize = file.length();
@@ -74,7 +74,7 @@ public class SocketConnection {
 		reader.close();
 	}
 	
-	public String ReadFile(File file) throws IOException {
+	public String readFile(File file) throws IOException {
 		byte flag = inStream.readByte();
 		if (flag != DATA_IS_FILE) {	
 			if (flag == DATA_IS_STRING)
@@ -102,13 +102,13 @@ public class SocketConnection {
 		return STR_RECEIVE_FILE_OK;
 	}
 	
-	public void CloseConnection() {
+	public void closeConnection() {
 		if ((socket == null) || (socket.isClosed())) return;
 		try {
 			socket.close();
-			Logger.Write(STR_SOCKET_CLOSED_OK);
+			Logger.write(STR_SOCKET_CLOSED_OK);
 		} catch(Exception e) {
-			Logger.Write(STR_SOCKET_CLOSE_FAILED + e.getMessage());
+			Logger.write(STR_SOCKET_CLOSE_FAILED + e.getMessage());
 		}
 	}
 	

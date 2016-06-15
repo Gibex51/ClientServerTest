@@ -18,37 +18,37 @@ public class ClientThread extends Thread {
 	
 	public ClientThread(Socket socket) {		
 		connection = new SocketConnection(socket);
-		Logger.Write(STR_CLIENT_THREAD_CREATED + socket.toString());
+		Logger.write(STR_CLIENT_THREAD_CREATED + socket.toString());
 	}
 	
-	public void InterruptThread() {		
-		connection.CloseConnection();
+	public void interruptThread() {		
+		connection.closeConnection();
 		Thread.currentThread().interrupt();
-		Logger.Write(STR_CLIENT_THREAD_INTERRUPTED);
+		Logger.write(STR_CLIENT_THREAD_INTERRUPTED);
 	}
 	
-	private void ExecuteCommand(String message) throws IOException {
-		Logger.Write(STR_RECEIVED_MESSAGE + message);
+	private void executeCommand(String message) throws IOException {
+		Logger.write(STR_RECEIVED_MESSAGE + message);
 		String[] command = message.split("[:]");
 		switch (command[0]) {
 		case "list": {
-			connection.WriteLine(Statistic.getFileListFromSharedDirectory());
+			connection.writeLine(Statistic.getFileListFromSharedDirectory());
 			break;
 		}
 		case "get": {
 			if (command.length == 2) {
 				File file = Statistic.getFileFromSharedDirectory(command[1]);
 				if (file.exists() && file.isFile())
-					connection.WriteFile(file);
+					connection.writeFile(file);
 				else
-					connection.WriteLine(STR_OUT_FILE_NOT_EXISTS);			
+					connection.writeLine(STR_OUT_FILE_NOT_EXISTS);			
 			} else {
-				connection.WriteLine(STR_OUT_INVALID_PARAM);
+				connection.writeLine(STR_OUT_INVALID_PARAM);
 			}
 			break;
 		}
 		default: {
-			connection.WriteLine(STR_OUT_UNKNOWN_COMMAND + command[0]);
+			connection.writeLine(STR_OUT_UNKNOWN_COMMAND + command[0]);
 		}
 		}
 	}
@@ -57,13 +57,13 @@ public class ClientThread extends Thread {
 	public void run() {
 		while (true) {	
 			if (Thread.interrupted()) {
-				connection.CloseConnection();
+				connection.closeConnection();
 				return;
 			}
 			try {
-				ExecuteCommand(connection.ReadLine());
+				executeCommand(connection.readLine());
 			} catch (Exception e) {
-				InterruptThread();
+				interruptThread();
 			}
 		}
 	}

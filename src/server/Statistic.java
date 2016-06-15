@@ -14,6 +14,7 @@ public class Statistic {
 	private static final String STR_SAVE_STAT_NOTCREATED = "Statistic file not created: ";
 	private static final String STR_SAVE_STAT_OK = "Statistic file saved";
 	private static final String STR_SAVE_STAT_FAILED = "Statistic file not saved: ";
+	private static final String STR_SET_SHARED_DIR = "Set custom shared directory: ";
 	
 	private static final String PATH_SEP = File.separator;
 	private static final String APP_HOME = System.getProperty("user.home") + PATH_SEP + "testapp";
@@ -23,9 +24,19 @@ public class Statistic {
 	
 	private static final Map<String, Integer> fileStats = Collections.synchronizedMap(new HashMap<String, Integer>());
 	private static Timer timer = null;
+	private static String customSharedDir = SHARED_DIRECTORY;
+	
+	public static boolean setCustomSharedDir(String path) {
+		File file = new File(path);
+		if (!file.exists()) file.mkdirs();
+		if (!file.isDirectory()) return false;
+		customSharedDir = file.getAbsolutePath();
+		Logger.write(STR_SET_SHARED_DIR + customSharedDir);
+		return true;
+	}
 	
 	public static String getFileListFromSharedDirectory() {
-		File folder = new File(SHARED_DIRECTORY);
+		File folder = new File(customSharedDir);
         if (!folder.exists()) folder.mkdirs();
         File[] files = folder.listFiles(new FileFilter() {
     		@Override
@@ -43,7 +54,7 @@ public class Statistic {
 	}
 	
 	public static File getFileFromSharedDirectory(String fileName) {
-		File file = new File(SHARED_DIRECTORY + PATH_SEP + FileUtils.filterFileName(fileName));
+		File file = new File(customSharedDir + PATH_SEP + FileUtils.filterFileName(fileName));
 		if (file.exists()) {
 			String absFilePath = file.getAbsolutePath();
 			fileStats.put(absFilePath, fileStats.getOrDefault(absFilePath, 0) + 1);
@@ -57,7 +68,7 @@ public class Statistic {
 			try {
 				file.createNewFile();
 			} catch (Exception e) {
-				Logger.Write(STR_SAVE_STAT_NOTCREATED + e.getMessage());
+				Logger.write(STR_SAVE_STAT_NOTCREATED + e.getMessage());
 				return;
 			}
 		}
@@ -66,9 +77,9 @@ public class Statistic {
 			for (Entry<String, Integer> entry : fileStats.entrySet())
 				writer.write(entry.getKey() + "=" + entry.getValue().toString());
 			writer.close();
-			Logger.Write(STR_SAVE_STAT_OK);
+			Logger.write(STR_SAVE_STAT_OK);
 		} catch (Exception e) {
-			Logger.Write(STR_SAVE_STAT_FAILED + e.getMessage());
+			Logger.write(STR_SAVE_STAT_FAILED + e.getMessage());
 		}
 	}
 	
@@ -89,10 +100,10 @@ public class Statistic {
 	}
 	
 	public static void loadStatistic() {
-		Logger.AddWriter(new FileLogWriter(LOG_FILE));
+		Logger.addWriter(new FileLogWriter(LOG_FILE));
 		File file = new File(STAT_FILE);		
 		if (!file.exists()) {
-			Logger.Write(STR_LOAD_STAT_NOFILE);
+			Logger.write(STR_LOAD_STAT_NOFILE);
 			return;
 		}
 		try {
@@ -105,9 +116,9 @@ public class Statistic {
 				fileStats.put(filePath, count);
 			}
 			reader.close();
-			Logger.Write(STR_LOAD_STAT_OK);
+			Logger.write(STR_LOAD_STAT_OK);
 		} catch (Exception e) {
-			Logger.Write(STR_LOAD_STAT_FAILED + e.getMessage());
+			Logger.write(STR_LOAD_STAT_FAILED + e.getMessage());
 		}		
 	}
 }

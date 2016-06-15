@@ -22,30 +22,30 @@ public class ClientAcceptor extends Thread {
 		try {
 			serverSocket = new ServerSocket(port);
 			serverSocket.setSoTimeout(10000);
-			Logger.Write(String.format(STR_SERV_SOCKET_INIT_OK, port));
+			Logger.write(String.format(STR_SERV_SOCKET_INIT_OK, port));
 		} catch (Exception e) {		
-			Logger.Write(STR_SERV_SOCKET_INIT_FAILED + e.getMessage());
+			Logger.write(STR_SERV_SOCKET_INIT_FAILED + e.getMessage());
 		}
 	}
 	
-	private void CloseConnections() {
-		Logger.Write(STR_WAIT_CLOSING_CONNECTIONS);
+	private void closeConnections() {
+		Logger.write(STR_WAIT_CLOSING_CONNECTIONS);
 		for (ClientThread clientThread : clients) {
 			if (!clientThread.isAlive()) continue;
-			clientThread.InterruptThread();
+			clientThread.interruptThread();
 			while (clientThread.isAlive()) {}
 		}
 		clients.clear();
-		Logger.Write(STR_CONNECTIONS_CLOSED);
+		Logger.write(STR_CONNECTIONS_CLOSED);
 	}
 	
-	private void CloseSocket() {
+	private void closeSocket() {
 		if ((serverSocket == null) || (serverSocket.isClosed())) return;
 		try {
 			serverSocket.close();
-			Logger.Write(STR_SERV_SOCKET_CLOSED);
+			Logger.write(STR_SERV_SOCKET_CLOSED);
 		} catch (Exception e) {
-			Logger.Write(STR_SERV_SOCKET_CLOSE_FAILED + e.getMessage());
+			Logger.write(STR_SERV_SOCKET_CLOSE_FAILED + e.getMessage());
 		}
 	}
 	
@@ -53,21 +53,21 @@ public class ClientAcceptor extends Thread {
 	public void run() {
 		while (true) {
 			if (Thread.interrupted()) {
-				CloseConnections();
-				CloseSocket();
+				closeConnections();
+				closeSocket();
 				return;
 			}
 			try {
 				Socket socket = serverSocket.accept();
 				if (socket != null) {
-					Logger.Write(STR_SOCKET_ACCEPTED + socket.toString());
+					Logger.write(STR_SOCKET_ACCEPTED + socket.toString());
 					ClientThread clientThread = new ClientThread(socket);
 					clientThread.start();
 					clients.add(clientThread);
 				}
 			} catch (Exception e) {
 				if (e.getClass() != SocketTimeoutException.class)
-					Logger.Write(STR_SOCKET_ACCEPT_FAILED + e.getMessage());
+					Logger.write(STR_SOCKET_ACCEPT_FAILED + e.getMessage());
 			}
 		}
 	}
