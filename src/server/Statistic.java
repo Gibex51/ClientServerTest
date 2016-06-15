@@ -72,15 +72,22 @@ public class Statistic {
 				return;
 			}
 		}
+		BufferedWriter writer = null;
 		try {
-			BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+			writer = new BufferedWriter(new FileWriter(file));
 			for (Entry<String, Integer> entry : fileStats.entrySet())
 				writer.write(entry.getKey() + "=" + entry.getValue().toString());
-			writer.close();
 			Logger.write(STR_SAVE_STAT_OK);
 		} catch (Exception e) {
 			Logger.write(STR_SAVE_STAT_FAILED + e.getMessage());
-		}
+		} finally {			
+			try {
+				if (writer != null)
+					writer.close();
+			} catch (Exception e) {
+				Logger.write(e.getMessage());
+			}
+		} 
 	}
 	
 	public static void startSaveStatisticTimer(int periodInSeconds) {
