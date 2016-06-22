@@ -32,7 +32,7 @@ public class ClientAcceptor extends Thread {
 		Logger.write(STR_WAIT_CLOSING_CONNECTIONS);
 		for (ClientThread clientThread : clients) {
 			if (!clientThread.isAlive()) continue;
-			clientThread.interruptThread();
+			clientThread.interrupt();
 			while (clientThread.isAlive()) {}
 		}
 		clients.clear();

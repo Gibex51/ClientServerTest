@@ -14,24 +14,17 @@ public class Statistic {
 	private static final String STR_SAVE_STAT_NOTCREATED = "Statistic file not created: ";
 	private static final String STR_SAVE_STAT_OK = "Statistic file saved";
 	private static final String STR_SAVE_STAT_FAILED = "Statistic file not saved: ";
-	private static final String STR_SET_SHARED_DIR = "Set custom shared directory: ";
-	
-	private static final String PATH_SEP = File.separator;
-	private static final String APP_HOME = System.getProperty("user.home") + PATH_SEP + "testapp";
-	private static final String SHARED_DIRECTORY = APP_HOME + PATH_SEP + "shared";	
-	private static final String STAT_FILE = APP_HOME + PATH_SEP + "stat.txt";
-	private static final String LOG_FILE = APP_HOME + PATH_SEP + "serverlog.txt";
 	
 	private static final Map<String, Integer> fileStats = Collections.synchronizedMap(new HashMap<String, Integer>());
 	private static Timer timer = null;
-	private static String customSharedDir = SHARED_DIRECTORY;
+	private static String customSharedDir = Strings.SHARED_DIRECTORY;
 	
 	public static boolean setCustomSharedDir(String path) {
 		File file = new File(path);
 		if (!file.exists()) file.mkdirs();
 		if (!file.isDirectory()) return false;
+		
 		customSharedDir = file.getAbsolutePath();
-		Logger.write(STR_SET_SHARED_DIR + customSharedDir);
 		return true;
 	}
 	
@@ -54,7 +47,7 @@ public class Statistic {
 	}
 	
 	public static File getFileFromSharedDirectory(String fileName) {
-		File file = new File(customSharedDir + PATH_SEP + FileUtils.filterFileName(fileName));
+		File file = new File(customSharedDir + Strings.PATH_SEP + FileUtils.filterFileName(fileName));
 		if (file.exists()) {
 			String absFilePath = file.getAbsolutePath();
 			fileStats.put(absFilePath, fileStats.getOrDefault(absFilePath, 0) + 1);
@@ -62,32 +55,23 @@ public class Statistic {
 		return file;
 	}
 	
-	public static void saveStatistic() {
-		File file = new File(STAT_FILE);		
+	public static String saveStatistic() {
+		File file = new File(Strings.STAT_FILE);		
 		if (!file.exists()) {
 			try {
 				file.createNewFile();
 			} catch (Exception e) {
-				Logger.write(STR_SAVE_STAT_NOTCREATED + e.getMessage());
-				return;
+				return STR_SAVE_STAT_NOTCREATED + e.getMessage(); 
 			}
 		}
-		BufferedWriter writer = null;
-		try {
-			writer = new BufferedWriter(new FileWriter(file));
+		
+		try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
 			for (Entry<String, Integer> entry : fileStats.entrySet())
 				writer.write(entry.getKey() + "=" + entry.getValue().toString());
-			Logger.write(STR_SAVE_STAT_OK);
+			return STR_SAVE_STAT_OK;
 		} catch (Exception e) {
-			Logger.write(STR_SAVE_STAT_FAILED + e.getMessage());
-		} finally {			
-			try {
-				if (writer != null)
-					writer.close();
-			} catch (Exception e) {
-				Logger.write(e.getMessage());
-			}
-		} 
+			return STR_SAVE_STAT_FAILED + e.getMessage();
+		}
 	}
 	
 	public static void startSaveStatisticTimer(int periodInSeconds) {
@@ -106,26 +90,22 @@ public class Statistic {
 		timer = null;
 	}
 	
-	public static void loadStatistic() {
-		Logger.addWriter(new FileLogWriter(LOG_FILE));
-		File file = new File(STAT_FILE);		
-		if (!file.exists()) {
-			Logger.write(STR_LOAD_STAT_NOFILE);
-			return;
-		}
-		try {
-			BufferedReader reader = new BufferedReader(new java.io.FileReader(file));
+	public static String loadStatistic() {		
+		File file = new File(Strings.STAT_FILE);		
+		if (!file.exists())
+			return STR_LOAD_STAT_NOFILE;
+		
+		try (BufferedReader reader = new BufferedReader(new java.io.FileReader(file))) {
 			while (true) {
 				String line = reader.readLine();
 				if (line == null) break;
 				Integer count = Integer.parseInt(line.substring(line.lastIndexOf("=") + 1, line.length()));
 				String filePath = line.substring(0, line.lastIndexOf("="));
 				fileStats.put(filePath, count);
-			}
-			reader.close();
-			Logger.write(STR_LOAD_STAT_OK);
+			}		
+			return STR_LOAD_STAT_OK;
 		} catch (Exception e) {
-			Logger.write(STR_LOAD_STAT_FAILED + e.getMessage());
-		}		
+			return STR_LOAD_STAT_FAILED + e.getMessage();
+		}
 	}
 }

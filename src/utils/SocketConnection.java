@@ -6,15 +6,13 @@ import java.nio.ByteBuffer;
 
 public class SocketConnection {
 	
-	private final String STR_SOCKET_ERROR = "Socket initialization failed: ";
-	private final String STR_SOCKET_ERROR_EX = STR_SOCKET_ERROR + "[port: %d host: %s]: ";
-	private final String STR_SOCKET_CLOSED_OK = "Socket closed";
-	private final String STR_SOCKET_CLOSE_FAILED = "Socket close failed: ";
 	private final String STR_UNKNOWN_DATA = "Unknown data";
 	private final String STR_RECEIVE_FILE_OK = "Receive file sucsessfully";
+	private final String STR_FILE_IS_NULL = "File is null";
 	
 	private final byte DATA_IS_STRING = 0;
 	private final byte DATA_IS_FILE = 1;
+	private final int BUFFER_SIZE = 262144;
 	
 	Socket socket = null;
 	DataOutputStream outStream = null;
@@ -25,22 +23,14 @@ public class SocketConnection {
 		inStream = new DataInputStream(socket.getInputStream());
 	}
 	
-	public SocketConnection(String host, int port) {
-		try {
-			socket = new Socket(host, port);
-			initializeIOStreams();
-		} catch (Exception e) {
-			Logger.write(String.format(STR_SOCKET_ERROR_EX, port, host) + e.getMessage());
-		}
+	public SocketConnection(String host, int port) throws UnknownHostException, IOException {
+		socket = new Socket(host, port);
+		initializeIOStreams();
 	}
 	
-	public SocketConnection(Socket socket) {
-		try {
-			this.socket = socket;
-			initializeIOStreams();
-		} catch (Exception e) {
-			Logger.write(STR_SOCKET_ERROR + e.getMessage());
-		}
+	public SocketConnection(Socket socket) throws IOException {
+		this.socket = socket;
+		initializeIOStreams();
 	}
 	
 	public void writeLine(String message) throws IOException {
@@ -62,12 +52,11 @@ public class SocketConnection {
 		byte[] sizeInBytes = ByteBuffer.allocate(Long.SIZE).putLong(fileSize).array();
 		outStream.write(sizeInBytes, 0, 8);
 		
-		int bufferSize = 262144;
-		byte[] buffer = new byte[bufferSize];
+		byte[] buffer = new byte[BUFFER_SIZE];
 		int readedTotal = 0;
 		BufferedInputStream reader = new BufferedInputStream(new FileInputStream(file));
 		while (readedTotal < fileSize) {
-			int readed = reader.read(buffer, 0, bufferSize);
+			int readed = reader.read(buffer, 0, BUFFER_SIZE);
 			readedTotal += readed;
 			outStream.write(buffer, 0, readed);
 		}
@@ -82,18 +71,21 @@ public class SocketConnection {
 			else
 				return STR_UNKNOWN_DATA;
 		}
-		
+			
 		byte[] buffer = new byte[8];
 		if (inStream.read(buffer, 0, 8) != 8) 
 			return STR_UNKNOWN_DATA;
 		long fileSize = ByteBuffer.wrap(buffer).getLong();
 	
-		int bufferSize = 262144;
-		buffer = new byte[bufferSize];
-		int readedTotal = 0;
+		if (file == null) 
+			return STR_FILE_IS_NULL;
+		if (!file.exists()) file.createNewFile();
 		BufferedOutputStream writer = new BufferedOutputStream(new FileOutputStream(file));
+				
+		buffer = new byte[BUFFER_SIZE];
+		int readedTotal = 0;		
 		while (readedTotal < fileSize) {
-			int readed = inStream.read(buffer, 0, bufferSize);		
+			int readed = inStream.read(buffer, 0, BUFFER_SIZE);		
 			if (readed < 0) break;
 			writer.write(buffer, 0, readed);
 			readedTotal += readed;
@@ -102,14 +94,9 @@ public class SocketConnection {
 		return STR_RECEIVE_FILE_OK;
 	}
 	
-	public void closeConnection() {
+	public void closeConnection() throws IOException {
 		if ((socket == null) || (socket.isClosed())) return;
-		try {
 			socket.close();
-			Logger.write(STR_SOCKET_CLOSED_OK);
-		} catch(Exception e) {
-			Logger.write(STR_SOCKET_CLOSE_FAILED + e.getMessage());
-		}
 	}
 	
 	@Override

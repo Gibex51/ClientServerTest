@@ -14,16 +14,31 @@ public class ClientThread extends Thread {
 	private final String STR_OUT_INVALID_PARAM = "Invalid parameter. Use get:<filename>";
 	private final String STR_OUT_UNKNOWN_COMMAND = "Unknown command: ";
 	
+	private final String STR_SOCKET_CREATE_ERROR = "Socket initialization failed: ";
+	private final String STR_SOCKET_CLOSED_OK = "Socket closed";
+	private final String STR_SOCKET_CLOSE_FAILED = "Socket close failed: ";
+	private final String STR_SOCKET_IO_ERROR = "Socket IO error: ";
+	
 	private SocketConnection connection = null;
 	
-	public ClientThread(Socket socket) {		
-		connection = new SocketConnection(socket);
-		Logger.write(STR_CLIENT_THREAD_CREATED + socket.toString());
+	public ClientThread(Socket socket) {	
+		try {
+			connection = new SocketConnection(socket);
+			Logger.write(STR_CLIENT_THREAD_CREATED + socket.toString());
+		} catch (IOException e) {
+			Logger.write(STR_SOCKET_CREATE_ERROR + socket.toString() + e.getMessage());
+		}		
 	}
 	
-	public void interruptThread() {		
-		connection.closeConnection();
-		Thread.currentThread().interrupt();
+	@Override
+	public void interrupt() {
+		try {
+			connection.closeConnection();
+			Logger.write(STR_SOCKET_CLOSED_OK);
+		} catch (IOException e) {
+			Logger.write(STR_SOCKET_CLOSE_FAILED + e.getMessage());
+		}
+		super.interrupt();
 		Logger.write(STR_CLIENT_THREAD_INTERRUPTED);
 	}
 	
@@ -56,14 +71,14 @@ public class ClientThread extends Thread {
 	@Override
 	public void run() {
 		while (true) {	
-			if (Thread.interrupted()) {
-				connection.closeConnection();
+			if (Thread.interrupted())
 				return;
-			}
+			
 			try {
 				executeCommand(connection.readLine());
 			} catch (Exception e) {
-				interruptThread();
+				Logger.write(STR_SOCKET_IO_ERROR + e.getMessage());
+				interrupt();
 			}
 		}
 	}
